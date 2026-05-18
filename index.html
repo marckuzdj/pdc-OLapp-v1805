@@ -207,7 +207,12 @@
         <div id="formOriginal" class="hidden">
 
             <div style="text-align: right; margin-bottom: 15px;">
-              <a href="javascript:void(0)" onclick="carregarTokensPendentes()" style="color: #8A05BE; font-weight: bold; text-decoration: none; font-size: 14px;">🔑 Tokens Pendentes</a>
+              <a href="javascript:void(0)" onclick="carregarTokensPendentes()" style="color: #8A05BE; font-weight: bold; text-decoration: none; font-size: 14px;">🔑 Tokens Conferência</a>
+            </div>
+
+            <!-- INSERIR ESTE NOVO BLOCO LOGO ABAIXO: -->
+            <div style="text-align: right; margin-bottom: 15px;">
+              <a href="javascript:void(0)" onclick="abrirModalDevolucao()" style="color: #8A05BE; font-weight: bold; text-decoration: none; font-size: 14px;">🔄 Gerar Token Devolução</a>
             </div>
             
             <div class="input-group">
@@ -635,6 +640,58 @@
         }
 
 
+        function processarTokenDevolucao() {
+          const romaneio = document.getElementById('devRomaneioInput').value.trim();
+          const btn = document.getElementById('btnGerarDev');
+          const msgEl = document.getElementById('msgDevolucao');
+          
+          if (!romaneio) {
+            msgEl.innerHTML = "Por favor, digite um número de Romaneio.";
+            msgEl.className = "msg-auth error";
+            msgEl.style.display = "block";
+            return;
+          }
+          
+          btn.disabled = true;
+          msgEl.innerHTML = "Processando e validando token exclusivo no servidor...";
+          msgEl.className = "msg-auth loading";
+          msgEl.style.display = "block";
+          document.getElementById('devTokenOutput').value = '';
+          
+          // Callback de Resposta do JSONP
+          window.cbDevolucao = (res) => {
+            btn.disabled = false;
+            if (res.success) {
+              // Exibe o token gerado pelo servidor no campo Read-Only
+              document.getElementById('devTokenOutput').value = res.token;
+              msgEl.innerHTML = "Token exclusivo gerado e salvo com sucesso!";
+              msgEl.className = "msg-auth success";
+            } else {
+              msgEl.innerHTML = res.error || "Erro ao registrar o token.";
+              msgEl.className = "msg-auth error";
+            }
+          };
+          
+          // Dispara ação para o backend sem passar o token na requisição
+          callServer('salvarTokenDevolucao', { romaneio: romaneio }, 'cbDevolucao');
+        }
+
+            function abrirModalDevolucao() {
+          document.getElementById('devRomaneioInput').value = '';
+          document.getElementById('devTokenOutput').value = '';
+          const msgEl = document.getElementById('msgDevolucao');
+          msgEl.style.display = 'none';
+          msgEl.className = 'msg-auth';
+          
+          document.getElementById('modalDevolucao').style.display = 'flex';
+          document.getElementById('modalDevolucao').classList.remove('hidden');
+        }
+        
+        function fecharModalDevolucao() {
+          document.getElementById('modalDevolucao').style.display = 'none';
+          document.getElementById('modalDevolucao').classList.add('hidden');
+        }    
+
     </script>
 
     <!-- Pop-up de Sucesso Universal -->
@@ -670,6 +727,32 @@
         </div>
     </div>
 
+    <!-- Pop-up de Gerar Token de Devolução -->
+    <div id="modalDevolucao" class="modal-overlay hidden" style="display: none; background: rgba(0,0,0,0.5); position: fixed; inset: 0; align-items: center; justify-content: center; z-index: 1000;">
+      <div class="modal-content" style="background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: left;">
+        <h3 style="color: #8A05BE; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #8A05BE; padding-bottom: 5px; text-align: center;">Gerar Token Devolução</h3>
+        
+        <div class="input-group" style="margin-bottom: 15px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #8A05BE; font-size: 14px;">Nº do Romaneio:</label>
+          <input type="text" id="devRomaneioInput" placeholder="Digite o número do romaneio" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px;">
+        </div>
+    
+        <div class="input-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #8A05BE; font-size: 14px;">Token Gerado (Read-Only):</label>
+          <input type="text" id="devTokenOutput" readonly style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; background-color: #f0f4f8; font-weight: bold; text-align: center; color: #8A05BE;">
+        </div>
+    
+        <div id="msgDevolucao" class="msg-auth" style="margin-bottom: 15px; display: none; padding: 10px; border-radius: 6px; font-size: 13px;"></div>
+    
+        <button onclick="processarTokenDevolucao()" id="btnGerarDev" style="background-color: #8A05BE; color: white; border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; margin-bottom: 10px;">
+          Gerar Token
+        </button>
+        
+        <button onclick="fecharModalDevolucao()" style="background-color: #666; color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%;">
+          Fechar
+        </button>
+      </div>
+    </div>
 
 </body>
 </html>
